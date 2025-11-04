@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>뉴스 앱</title>
+    <style>
+        :root {
+            --primary-color: #4A90E2; /* Blue */
+            --secondary-color: #F5A623; /* Orange */
+            --background-color: #F8F9FA; /* Light Gray */
+            --surface-color: #FFFFFF; /* White */
+            --text-color: #333333; /* Dark Gray */
+            --light-text-color: #666666; /* Medium Gray */
+            --border-color: #E0E0E0; /* Lighter Gray */
+            --shadow-color: rgba(0, 0, 0, 0.08);
+
+            --spacing-xs: clamp(0.25rem, 1vw, 0.5rem);
+            --spacing-sm: clamp(0.5rem, 2vw, 1rem);
+            --spacing-md: clamp(1rem, 4vw, 1.5rem);
+            --spacing-lg: clamp(1.5rem, 6vw, 2rem);
+            --spacing-xl: clamp(2rem, 8vw, 3rem);
+
+            --font-size-sm: clamp(0.8rem, 2vw, 0.9rem);
+            --font-size-md: clamp(1rem, 2.5vw, 1.1rem);
+            --font-size-lg: clamp(1.2rem, 3vw, 1.4rem);
+            --font-size-xl: clamp(1.5rem, 4vw, 1.8rem);
+            --font-size-xxl: clamp(2rem, 5vw, 2.5rem);
+
+            --border-radius: 10px;
+            --touch-target-min: 44px;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            padding: env(safe-area-inset-top, 34px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 16px);
+            box-sizing: border-box;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        .app-container {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 20px var(--shadow-color);
+            width: min(90vw, 1200px);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Hide scrollbar for the container itself */
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: var(--font-size-xl);
+            font-weight: bold;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .header-buttons button {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            min-height: var(--touch-target-min);
+            min-width: var(--touch-target-min);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-buttons button:hover {
+            background-color: darken(var(--secondary-color), 10%);
+        }
+
+        .category-nav {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--surface-color);
+            gap: var(--spacing-sm);
+            white-space: nowrap; /* Prevent wrapping */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+            position: sticky;
+            top: calc(var(--touch-target-min) + var(--spacing-md)); /* Adjust for header height */
+            z-index: 90;
+        }
+
+        .category-nav::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .category-nav button {
+            flex-shrink: 0; /* Prevent buttons from shrinking */
+            background-color: var(--background-color);
+            color: var(--light-text-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: var(--touch-target-min);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .category-nav button.active,
+        .category-nav button:hover {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            border-color: var(--primary-color);
+        }
+
+        .main-content {
+            flex-grow: 1;
+            overflow-y: auto; /* Enable scrolling for main content */
+            padding: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .news-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .news-card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            padding: var(--spacing-md);
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: flex-start;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .news-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        .news-card .emoji {
+            font-size: var(--font-size-xxl);
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .news-card-content {
+            flex-grow: 1;
+        }
+
+        .news-card-content h3 {
+            margin: 0 0 var(--spacing-xs) 0;
+            font-size: var(--font-size-lg);
+            color: var(--primary-color);
+            line-height: 1.3;
+        }
+
+        .news-card-content p {
+            margin: 0;
+            font-size: var(--font-size-sm);
+            color: var(--light-text-color);
+        }
+
+        .news-detail-view {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            padding: var(--spacing-md);
+        }
+
+        .news-detail-view h2 {
+            font-size: var(--font-size-xxl);
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: var(--spacing-sm);
+            line-height: 1.2;
+        }
+
+        .news-detail-view .meta {
+            font-size: var(--font-size-sm);
+            color: var(--light-text-color);
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .news-detail-view .meta button {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            min-height: var(--touch-target-min);
+        }
+
+        .news-detail-view .meta button:hover {
+            background-color: darken(var(--secondary-color), 10%);
+        }
+
+        .news-detail-view .content {
+            font-size: var(--font-size-md);
+            line-height: 1.6;
+            margin-bottom: var(--spacing-lg);
+            white-space: pre-wrap; /* Preserve whitespace and line breaks */
+        }
+
+        .comments-section h3 {
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--spacing-sm);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-xs);
+        }
+
+        .comment-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+            padding: var(--spacing-md);
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+        }
+
+        .comment-form input[type="text"],
+        .comment-form input[type="password"],
+        .comment-form textarea {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-md);
+            box-sizing: border-box;
+            min-height: var(--touch-target-min);
+        }
+
+        .comment-form textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .comment-form button {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: var(--font-size-md);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            min-height: var(--touch-target-min);
+        }
+
+        .comment-form button:hover {
+            background-color: darken(var(--primary-color), 10%);
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .comment-item {
+            background-color: var(--background-color);
+            padding: var(--spacing-sm);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .comment-item .comment-meta {
+            font-size: var(--font-size-sm);
+            color: var(--light-text-color);
+            margin-bottom: var(--spacing-xs);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .comment-item .comment-text {
+            font-size: var(--font-size-md);
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .comment-item .comment-actions {
+            margin-top: var(--spacing-xs);
+            text-align: right;
+        }
+
+        .comment-item .comment-actions button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            padding: var(--spacing-xs);
+            min-height: var(--touch-target-min);
+            min-width: var(--touch-target-min);
+        }
+
+        .comment-item .comment-actions button:hover {
+            text-decoration: underline;
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            padding: var(--spacing-md);
+            margin-top: var(--spacing-md);
+        }
+
+        .admin-panel h3 {
+            font-size: var(--font-size-lg);
+            margin-top: 0;
+            margin-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-xs);
+        }
+
+        .admin-panel form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .admin-panel input[type="text"],
+        .admin-panel textarea,
+        .admin-panel select {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-md);
+            box-sizing: border-box;
+            min-height: var(--touch-target-min);
+        }
+
+        .admin-panel textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .admin-panel button {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: var(--font-size-md);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            min-height: var(--touch-target-min);
+        }
+
+        .admin-panel button:hover {
+            background-color: darken(var(--primary-color), 10%);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 30px var(--shadow-color);
+            width: min(90%, 400px);
+            max-height: 80vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            position: relative;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-md);
+            font-size: var(--font-size-xl);
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .modal-content form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .modal-content input[type="text"],
+        .modal-content input[type="password"] {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-md);
+            box-sizing: border-box;
+            min-height: var(--touch-target-min);
+        }
+
+        .modal-content button {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: var(--font-size-md);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            min-height: var(--touch-target-min);
+        }
+
+        .modal-content button:hover {
+            background-color: darken(var(--primary-color), 10%);
+        }
+
+        .modal-content .close-button {
+            position: absolute;
+            top: var(--spacing-sm);
+            right: var(--spacing-sm);
+            background: none;
+            border: none;
+            font-size: var(--font-size-xl);
+            color: var(--light-text-color);
+            cursor: pointer;
+            min-width: var(--touch-target-min);
+            min-height: var(--touch-target-min);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message {
+            font-size: var(--font-size-sm);
+            color: red;
+            text-align: center;
+            margin-top: var(--spacing-xs);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: var(--font-size-lg);
+            }
+            .header-buttons button {
+                font-size: var(--font-size-xs);
+                padding: var(--spacing-xs);
+            }
+            .news-card {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .news-card .emoji {
+                margin-bottom: var(--spacing-sm);
+            }
+            .news-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 1024px) {
+            .news-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>뉴스 앱</h1>
+            <div class="header-buttons">
+                <span id="loggedInUserDisplay" class="hidden" style="font-size: var(--font-size-sm); margin-right: var(--spacing-sm); display: flex; align-items: center;"></span>
+                <button id="adminPanelBtn" class="hidden">기사 작성 ✍️</button>
+                <button id="loginBtn">로그인 🔑</button>
+                <button id="registerBtn">회원가입 📝</button>
+                <button id="logoutBtn" class="hidden">로그아웃 🚪</button>
+            </div>
+        </header>
+
+        <nav class="category-nav" id="categoryNav">
+            <!-- Categories will be dynamically loaded here -->
+        </nav>
+
+        <main class="main-content" id="mainContent">
+            <div id="newsListView">
+                <div class="news-list" id="newsList">
+                    <!-- News cards will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <div id="newsDetailView" class="hidden news-detail-view">
+                <div class="meta">
+                    <button
+
+
+
+
+
+
+
+
+ onclick="showNewsList()">⬅️ 목록으로</button>
+                    <span id="newsDetailDate"></span>
+                </div>
+                <h2 id="newsDetailTitle" contenteditable="false"></h2>
+                <div id="newsDetailContent" class="content" contenteditable="false"></div>
+
+                <div class="comments-section">
+                    <h3>댓글 💬</h3>
+                    <div class="comment-form">
+                        <input type="text" id="commentNickname" placeholder="닉네임" />
+                        <input type="password" id="commentPassword" placeholder="비밀번호 (수정/삭제용)" />
+                        <textarea id="commentText" placeholder="댓글을 입력하세요"></textarea>
+                        <button onclick="addComment()">댓글 작성</button>
+                    </div>
+                    <div id="commentList" class="comment-list">
+                        <!-- Comments will be dynamically loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="adminPanel" class="hidden admin-panel">
+                <h3>새 기사 작성 ✍️</h3>
+                <form id="createNewsForm">
+                    <select id="createNewsCategory" required>
+                        <option value="">카테고리 선택</option>
+                        <option value="정치">정치 🏛️</option>
+                        <option value="경제">경제 💰</option>
+                        <option value="사회">사회 👥</option>
+                        <option value="문화">문화 🎭</option>
+                        <option value="IT">IT 💻</option>
+                        <option value="스포츠">스포츠 ⚽</option>
+                    </select>
+                    <input type="text" id="createNewsEmoji" placeholder="기사 대표 이모지 (예: 📰)" required />
+                    <input type="text" id="createNewsTitle" placeholder="기사 제목" required />
+                    <textarea id="createNewsContent" placeholder="기사 내용" required></textarea>
+                    <button type="submit">기사 추가</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-button" onclick="closeModal('loginModal')">✖️</button>
+            <h2>로그인 🔑</h2>
+            <form id="loginForm">
+                <input type="text" id="loginUsername" placeholder="아이디" required />
+                <input type="password" id="loginPassword" placeholder="비밀번호" required />
+                <button type="submit">로그인</button>
+                <p id="loginMessage" class="message"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-button" onclick="closeModal('registerModal')">✖️</button>
+            <h2>회원가입 📝</h2>
+            <form id="registerForm">
+                <input type="text" id="registerUsername" placeholder="아이디" required />
+                <input type="password" id="registerPassword" placeholder="비밀번호" required />
+                <button type="submit">회원가입</button>
+                <p id="registerMessage" class="message"></p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.body.addEventListener('dblclick', function(event) {
+            event.preventDefault();
+        });
+
+        // Prevent Android input focus crashes
+        document.addEventListener("focusin", function(e) {
+            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+                // For text inputs, allow focus, but ensure no native pickers are triggered.
+                // For other types (like hidden time/date inputs), blur them.
+                if (e.target.type !== "text" && e.target.type !== "password" && e.target.tagName !== "TEXTAREA") {
+                    setTimeout(() => e.target.blur(), 100);
+                }
+            }
+        });
+
+        const APP_STORAGE_KEY = 'NEWS_APP_STORAGE_KEY_V1';
+        window.APP_STORAGE_KEY = APP_STORAGE_KEY;
+
+        let newsArticles = [];
+        let users = [];
+        let currentUser = null;
+        let currentCategory = '전체'; // Default category
+
+        const categories = ['전체', '정치', '경제', '사회', '문화', 'IT', '스포츠'];
+        const categoryEmojis = {
+            '전체': '🌐',
+            '정치': '🏛️',
+            '경제': '💰',
+            '사회': '👥',
+            '문화': '🎭',
+            'IT': '💻',
+            '스포츠': '⚽'
+        };
+
+
+
+
+
+
+
+
+        // DOM Elements
+        const newsListDiv = document.getElementById('newsList');
+        const newsDetailView = document.getElementById('newsDetailView');
+        const newsListView = document.getElementById('newsListView');
+        const newsDetailTitle = document.getElementById('newsDetailTitle');
+        const newsDetailContent = document.getElementById('newsDetailContent');
+        const newsDetailDate = document.getElementById('newsDetailDate');
+        const commentNickname = document.getElementById('commentNickname');
+        const commentPassword = document.getElementById('commentPassword');
+        const commentText = document.getElementById('commentText');
+        const commentListDiv = document.getElementById('commentList');
+        const loginModal = document.getElementById('loginModal');
+        const registerModal = document.getElementById('registerModal');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const loginMessage = document.getElementById('loginMessage');
+        const registerMessage = document.getElementById('registerMessage');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const adminPanelBtn = document.getElementById('adminPanelBtn');
+        const adminPanel = document.getElementById('adminPanel');
+        const createNewsForm = document.getElementById('createNewsForm');
+        const loggedInUserDisplay = document.getElementById('loggedInUserDisplay');
+        const categoryNav = document.getElementById('categoryNav');
+
+        function generateUniqueId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function saveData() {
+            localStorage.setItem(APP_STORAGE_KEY + '_news', JSON.stringify(newsArticles));
+            localStorage.setItem(APP_STORAGE_KEY + '_users', JSON.stringify(users));
+            localStorage.setItem(APP_STORAGE_KEY + '_currentUser', JSON.stringify(currentUser));
+        }
+
+        function loadData() {
+            const savedNews = localStorage.getItem(APP_STORAGE_KEY + '_news');
+            const savedUsers = localStorage.getItem(APP_STORAGE_KEY + '_users');
+            const savedCurrentUser = localStorage.getItem(APP_STORAGE_KEY + '_currentUser');
+
+            if (savedNews) {
+                newsArticles = JSON.parse(savedNews);
+            } else {
+                // Sample news articles
+                newsArticles = [
+                    { id: generateUniqueId(), category: '정치', emoji: '🏛️', title: '여당, 새 정책 발표…국민 기대감 증폭', content: '여당은 오늘 국회에서 새로운 경제 활성화 정책을 발표했습니다. 이번 정책은 중소기업 지원과 청년 일자리 창출에 중점을 두고 있으며, 국민들의 큰 기대를 모으고 있습니다.', date: new Date().toISOString(), comments: [] },
+                    { id: generateUniqueId(), category: '경제', emoji: '💰', title: '주식 시장, AI 기술주 강세로 상승 마감', content: '오늘 주식 시장은 인공지능(AI) 관련 기술주들의 강세에 힘입어 상승 마감했습니다. 특히 반도체 및 소프트웨어 기업들의 주가가 큰 폭으로 올랐습니다.', date: new Date(Date.now() - 3600000).toISOString(), comments: [] },
+                    { id: generateUniqueId(), category: '사회', emoji: '👥', title: '환경 보호 캠페인, 전국적으로 확산', content: '전국 각지에서 환경 보호를 위한 다양한 캠페인이 확산되고 있습니다. 시민들은 플라스틱 줄이기, 재활용 생활화 등 적극적으로 참여하고 있습니다.', date: new Date(Date.now() - 7200000).toISOString(), comments: [] },
+                    { id: generateUniqueId(), category: '문화', emoji: '🎭', title: '신인 아이돌 그룹, 데뷔 앨범 차트 1위', content: '신인 아이돌 그룹 "스타라이트"가 데뷔 앨범으로 국내 주요 음원 차트 1위를 차지하며 돌풍을 일으키고 있습니다. 이들의 독특한 음악 스타일과 퍼포먼스가 팬들을 사로잡았습니다.', date: new Date(Date.now() - 10800000).toISOString(), comments: [] },
+                    { id: generateUniqueId(), category: 'IT', emoji: '💻', title: '최신 스마트폰, 혁신적인 카메라 기능 탑재', content: '새롭게 출시된 스마트폰이 혁신적인 카메라 기능을 탑재하여 소비자들의 이목을 집중시키고 있습니다. 특히 야간 촬영 성능이 대폭 향상되었다는 평가입니다.', date: new Date(Date.now() - 14400000).toISOString(), comments: [] },
+                    { id: generateUniqueId(), category: '스포츠', emoji: '⚽', title: '국가대표팀, 월드컵 예선전 승리', content: '우리나라 축구 국가대표팀이 월드컵 예선전에서 압도적인 경기력으로 승리했습니다. 다음 라운드 진출에 청신호가 켜졌습니다.', date: new Date(Date.now() - 18000000).toISOString(), comments: [] }
+                ];
+            }
+
+            if (savedUsers) {
+                users = JSON.parse(savedUsers);
+            } else {
+                users = [{ id: generateUniqueId(), username: 'admin', password: 'qwe121' }];
+            }
+
+            if (savedCurrentUser) {
+                currentUser = JSON.parse(savedCurrentUser);
+                updateUIForLoginState();
+            }
+        }
+
+        function formatDateTime(isoString) {
+            const date = new Date(isoString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}.${month}.${day} ${hours}:${minutes}`;
+        }
+
+        function renderCategories() {
+            categoryNav.innerHTML = '';
+            categories.forEach(cat => {
+                const button = document.createElement('button');
+                button.textContent = `${categoryEmojis[cat] || ''} ${cat}`;
+                button.classList.toggle('active', cat === currentCategory);
+                button.onclick = () => {
+                    currentCategory = cat;
+                    renderCategories(); // Re-render to update active state
+                    renderNewsList();
+                };
+                categoryNav.appendChild(button);
+            });
+        }
+
+        function renderNewsList() {
+            newsListDiv.innerHTML = '';
+            newsListView.classList.remove('hidden');
+            newsDetailView.classList.add('hidden');
+            adminPanel.classList.add('hidden');
+
+            const filteredNews = currentCategory === '전체'
+                ? newsArticles
+                : newsArticles.filter(news => news.category === currentCategory);
+
+            if (filteredNews.length === 0) {
+                newsListDiv.innerHTML = '<p style="text-align: center; color: var(--light-text-color);">해당 카테고리에 기사가 없습니다.</p>';
+                return;
+            }
+
+            filteredNews.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by newest first
+
+            filteredNews.forEach(news => {
+                const newsCard = document.createElement('div');
+                newsCard.classList.add('news-card');
+                newsCard.onclick = () => showNewsDetail(news.id);
+                newsCard.innerHTML = `
+                    <span class="emoji">${news.emoji}</span>
+                    <div class="news-card-content">
+                        <h3>${news.title}</h3>
+                        <p>작성일: ${formatDateTime(news.date)}</p>
+                    </div>
+                `;
+                newsListDiv.appendChild(newsCard);
+            });
+        }
+
+        function showNewsDetail(id) {
+            const news = newsArticles.find(n => n.id === id);
+            if (!news) return;
+
+            newsListView.classList.add('hidden');
+            adminPanel.classList.add('hidden');
+            newsDetailView.classList.remove('hidden');
+
+            newsDetailTitle.textContent = news.title;
+            newsDetailContent.textContent = news.content;
+            newsDetailDate.textContent = `작성일: ${formatDateTime(news.date)}`;
+
+            // Admin editability
+            if (currentUser && currentUser.username === 'admin') {
+                newsDetailTitle.contentEditable = true;
+                newsDetailContent.contentEditable = true;
+                newsDetailTitle.style.cursor = 'text';
+                newsDetailContent.style.cursor = 'text';
+
+                newsDetailTitle.onblur = (e) => updateNews(news.id, 'title', e.target.textContent);
+                newsDetailContent.onblur = (e) => updateNews(news.id, 'content', e.target.textContent);
+            } else {
+                newsDetailTitle.contentEditable = false;
+                newsDetailContent.contentEditable = false;
+                newsDetailTitle.style.cursor = 'default';
+                newsDetailContent.style.cursor = 'default';
+            }
+
+            renderComments(news.id);
+        }
+
+        function showNewsList() {
+            newsListView.classList.remove('hidden');
+            newsDetailView.classList.add('hidden');
+            adminPanel.classList.add('hidden');
+            renderNewsList();
+        }
+
+        function updateNews(id, field, newValue) {
+            const newsIndex = newsArticles.findIndex(n => n.id === id);
+            if (newsIndex > -1) {
+                newsArticles[newsIndex][field] = newValue;
+                saveData();
+                // No need to re-render list immediately, but detail view is updated
+                console.log(`News ${field} updated for ${id}`);
+            }
+        }
+
+        function renderComments(newsId) {
+            commentListDiv.innerHTML = '';
+            const news = newsArticles.find(n => n.id === newsId);
+            if (!news || !news.comments || news.comments.length === 0) {
+                commentListDiv.innerHTML = '<p style="text-align: center; color: var(--light-text-color);">아직 댓글이 없습니다.</p>';
+                return;
+            }
+
+            news.comments.sort((a, b) => new Date(b.date) - new Date(a.date)); // Newest comments first
+
+            news.comments.forEach(comment => {
+                const commentItem = document.createElement('div');
+                commentItem.classList.add('comment-item');
+                commentItem.innerHTML = `
+                    <div class="comment-meta">
+                        <span>${comment.nickname}</span>
+                        <span>${formatDateTime(comment.date)}</span>
+                    </div>
+                    <div class="comment-text">${comment.text}</div>
+                    <div class="comment-actions">
+                        <button onclick="editComment('${newsId}', '${comment.id}')">수정</button>
+                        <button onclick="deleteComment('${newsId}', '${comment.id}')">삭제</button>
+                    </div>
+                `;
+                commentListDiv.appendChild(commentItem);
+            });
+        }
+
+        function addComment() {
+            const newsId = newsArticles.find(n => n.title === newsDetailTitle.textContent)?.id;
+            if (!newsId) return;
+
+            const nickname = commentNickname.value.trim();
+            const password = commentPassword.value.trim();
+            const text = commentText.value.trim();
+
+            if (!nickname || !password || !text) {
+                alert('닉네임, 비밀번호, 댓글 내용을 모두 입력해주세요.');
+                return;
+            }
+
+            const news = newsArticles.find(n => n.id === newsId);
+            if (news) {
+                news.comments.push({
+                    id: generateUniqueId(),
+                    nickname,
+                    password, // Store password for verification
+                    text,
+                    date: new Date().toISOString()
+                });
+                saveData();
+                commentNickname.value = '';
+                commentPassword.value = '';
+                commentText.value = '';
+                renderComments(newsId);
+            }
+        }
+
+        function editComment(newsId, commentId) {
+            const news = newsArticles.find(n => n.id === newsId);
+            const comment = news?.comments.find(c => c.id === commentId);
+
+            if (!comment) return;
+
+            const inputPassword = prompt('댓글 수정 비밀번호를 입력하세요:');
+            if (inputPassword === comment.password) {
+                const newText = prompt('새 댓글 내용을 입력하세요:', comment.text);
+                if (newText !== null && newText.trim() !== '') {
+                    comment.text = newText.trim();
+                    comment.date = new Date().toISOString(); // Update date on edit
+                    saveData();
+                    renderComments(newsId);
+                }
+            } else if (inputPassword !== null) {
+                alert('비밀번호가 일치하지 않습니다.');
+            }
+        }
+
+        function deleteComment(newsId, commentId) {
+            const news = newsArticles.find(n => n.id === newsId);
+            const commentIndex = news?.comments.findIndex(c => c.id === commentId);
+
+            if (commentIndex === undefined || commentIndex === -1) return;
+
+            const inputPassword = prompt('댓글 삭제 비밀번호를 입력하세요:');
+            if (inputPassword === news.comments[commentIndex].password) {
+                if (confirm('정말로 이 댓글을 삭제하시겠습니까?')) {
+                    news.comments.splice(commentIndex, 1);
+                    saveData();
+                    renderComments(newsId);
+                }
+            } else if (inputPassword !== null) {
+                alert('비밀번호가 일치하지 않습니다.');
+            }
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            // Blur any active input to prevent Android keyboard issues
+            if (document.activeElement && document.activeElement.tagName !== 'BODY') {
+                document.activeElement.blur();
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            // Clear messages
+            if (modalId === 'loginModal') loginMessage.textContent = '';
+            if (modalId === 'registerModal') registerMessage.textContent = '';
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = loginForm.loginUsername.value.trim();
+            const password = loginForm.loginPassword.value.trim();
+
+            const user = users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                currentUser = user;
+                saveData();
+                updateUIForLoginState();
+                closeModal('loginModal');
+                alert(`${username}님, 환영합니다!`);
+            } else {
+                loginMessage.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
+            }
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            const username = registerForm.registerUsername.value.trim();
+            const password = registerForm.registerPassword.value.trim();
+
+            if (username.length < 3 || password.length < 4) {
+                registerMessage.textContent = '아이디는 3자 이상, 비밀번호는 4자 이상이어야 합니다.';
+                return;
+            }
+
+            if (users.some(u => u.username === username)) {
+                registerMessage.textContent = '이미 존재하는 아이디입니다. 다른 아이디를 사용해주세요.';
+                return;
+            }
+
+            users.push({ id: generateUniqueId(), username, password });
+            saveData();
+            closeModal('registerModal');
+            alert(`${username}님, 회원가입이 완료되었습니다! 로그인해주세요.`);
+            // Optionally, auto-fill login form
+            loginForm.loginUsername.value = username;
+            loginForm.loginPassword.value = '';
+            showModal('loginModal');
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            saveData();
+            updateUIForLoginState();
+            alert('로그아웃 되었습니다.');
+            showNewsList(); // Go back to news list view
+        }
+
+        function updateUIForLoginState() {
+            if (currentUser) {
+                loginBtn.classList.add('hidden');
+                registerBtn.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                loggedInUserDisplay.classList.remove('hidden');
+                loggedInUserDisplay.textContent = `${currentUser.username}님`;
+
+                if (currentUser.username === 'admin') {
+                    adminPanelBtn.classList.remove('hidden');
+                } else {
+                    adminPanelBtn.classList.add('hidden');
+                    adminPanel.classList.add('hidden'); // Hide admin panel if not admin
+                }
+            } else {
+                loginBtn.classList.remove('hidden');
+                registerBtn.classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
+                adminPanelBtn.classList.add('hidden');
+                adminPanel.classList.add('hidden');
+                loggedInUserDisplay.classList.add('hidden');
+            }
+            // Re-render current view to apply admin editability if needed
+            if (!newsListView.classList.contains('hidden')) {
+                renderNewsList();
+            } else if (!newsDetailView.classList.contains('hidden')) {
+                const currentNewsId = newsArticles.find(n => n.title === newsDetailTitle.textContent)?.id;
+                if (currentNewsId) showNewsDetail(currentNewsId);
+            }
+        }
+
+        function showAdminPanel() {
+            newsListView.classList.add('hidden');
+            newsDetailView.classList.add('hidden');
+            adminPanel.classList.remove('hidden');
+            // Clear form
+            createNewsForm.reset();
+        }
+
+        function createNews(event) {
+            event.preventDefault();
+            const category = createNewsForm.createNewsCategory.value;
+            const emoji = createNewsForm.createNewsEmoji.value.trim();
+            const title = createNewsForm.createNewsTitle.value.trim();
+            const content = createNewsForm.createNewsContent.value.trim();
+
+            if (!category || !emoji || !title || !content) {
+                alert('모든 필드를 채워주세요.');
+                return;
+            }
+
+            newsArticles.push({
+                id: generateUniqueId(),
+                category,
+                emoji,
+                title,
+                content,
+                date: new Date().toISOString(),
+                comments: []
+            });
+            saveData();
+            alert('기사가 성공적으로 추가되었습니다!');
+            createNewsForm.reset();
+            currentCategory = category; // Switch to the category of the new article
+            renderCategories();
+            showNewsList(); // Go back to news list view
+        }
+
+        // Event Listeners
+        window.addEventListener('load', () => {
+            loadData();
+            renderCategories();
+            renderNewsList();
+            updateUIForLoginState(); // Ensure UI reflects login state on load
+        });
+
+        loginBtn.onclick = () => showModal('loginModal');
+        registerBtn.onclick = () => showModal('registerModal');
+        logoutBtn.onclick = handleLogout;
+        adminPanelBtn.onclick = showAdminPanel;
+
+        loginForm.addEventListener('submit', handleLogin);
+        registerForm.addEventListener('submit', handleRegister);
+        createNewsForm.addEventListener('submit', createNews);
+    </script>
+</body>
+</html>
