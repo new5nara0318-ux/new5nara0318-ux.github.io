@@ -1,1 +1,0 @@
-# new5nara0318-ux.github.io
